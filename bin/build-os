@@ -1,0 +1,29 @@
+#!/bin/bash
+
+#
+# 2016-05-27
+# Author: Mizuki Urushida
+#
+
+TARGET=$1
+
+arg_check () {
+	if [ 1 -ne $1 ]; then
+		echo "You can set only one argument."
+		exit 1
+	fi
+}
+
+clean_tmp () {
+	rm tmp.img
+}
+
+arg_check $#
+
+as ${TARGET} -o tmp.img
+
+HEADER_SIZE=`readelf -h tmp.img | grep "Size of section" | tr -d ' ' | perl -pe 's|.*?:(.*?)\(.*|$1|'`
+
+dd if=tmp.img of=helloos.img skip=${HEADER_SIZE} bs=1
+
+clean_tmp

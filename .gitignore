@@ -1,2 +1,4 @@
 # os binary
 *.img
+
+build/

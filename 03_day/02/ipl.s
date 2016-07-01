@@ -6,7 +6,7 @@
 start:
 	jmp		entry
 	.byte	0x90
-	.ascii	"HELLOIPL"		# ブートセクタの名前を自由に書いてよい（8バイト）
+	.ascii	"IPL     "		# ブートセクタの名前を自由に書いてよい（8バイト）
 	.word	512				# 1セクタの大きさ（512にしなければいけない）
 	.byte	1				# クラスタの大きさ（1セクタにしなければいけない）
 	.word	1				# FATがどこから始まるか（普通は1セクタ目からにする）
@@ -21,7 +21,7 @@ start:
 	.int 	2880			# このドライブ大きさをもう一度書く
 	.byte	0,0,0x29		# よくわからないけどこの値にしておくといいらしい
 	.int 	0xffffffff		# たぶんボリュームシリアル番号
-	.ascii	"HELLO-OS   "	# ディスクの名前（11バイト）
+	.ascii	"HARIBOTEOS "	# ディスクの名前（11バイト）
 	.ascii	"FAT12   "		# フォーマットの名前（8バイト）
 	.skip	18				# とりあえず18バイトあけておく
 # プログラム本体
@@ -31,7 +31,34 @@ entry:
 	movw	%ax, %ss
 	movw	$start, %sp
 	movw	%ax, %ds
+# ディスクを読む
+	movw	$0x0820, %ax
 	movw	%ax, %es
+	movb	$0, %ch			# シリンダ0
+	movb	$0, %dh			# ヘッド0
+	movb	$2, %cl			# セクタ2
+	movw	$0, %si			# 失敗回数を数えるレジスタ
+
+retry:
+	movb	$0x02, %ah		# AH=0x02 : ディスク読み込み
+	movb	$1, %al			# 1セクタ
+	movw	$0, %bx
+	movb	$0x00, %dl		# Aドライブ
+	int		$0x13			# ディスクBIOS呼び出し
+	jnc		fin
+	addw	$1, %si
+	cmpw	$5, %si
+	jae		error
+	movb	$0, %ah			# 初期化してリトライ
+	movb	$0, %dl
+	int		$0x13
+	jmp		retry
+
+fin:
+	hlt					# 何かあるまでCPUを停止させる
+	jmp		fin				# 無限ループ
+
+error:
 	movw	$msg, %si
 
 putloop:
@@ -44,10 +71,6 @@ putloop:
 	int		$0x10			# ビデオBIOS呼び出し
 	jmp		putloop
 
-fin:
-	hlt					# 何かあるまでCPUを停止させる
-	jmp		fin				# 無限ループ
-
 .data
 msg:
-	.string	"hello, world"
+	.string	"Load Error"

@@ -1,0 +1,8 @@
+OUTPUT_FORMAT("binary")
+ENTRY("main")
+
+BOOT_BASE = 0x00280000;
+
+SECTIONS {
+	. = BOOT_BASE;
+}

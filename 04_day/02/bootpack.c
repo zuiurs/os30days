@@ -6,7 +6,7 @@ void main(void)
 	int i;
 
 	for (i = 0xA0000; i <= 0xAFFFF; i ++) {
-		write_mem8(i, i & 0x0F);
+		write_mem8(i, i & 0xFF);
 	}
 
 	for (;;) {
